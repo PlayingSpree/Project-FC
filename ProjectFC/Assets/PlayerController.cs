@@ -5,44 +5,30 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     // Ref
-    new Rigidbody rigidbody;
+    private InputReceiver inputReceiver;
     // Status
-    public Vector3 currentForce;
-    public Vector3 targetForce;
-    public float currentDrag;
-    public float targetDrag;
+
     // Enquipment
     public GameData.GravShoe shoe = new GameData.GravShoe();
     public GameData.Suit suit = new GameData.Suit();
 
-    void Awake()
+    private void Awake()
     {
         // Set Ref
-        rigidbody = GetComponent<Rigidbody>();
-
-        // Init stat
-        rigidbody.mass = suit.weight;
-        currentDrag = suit.dragMax;
-        targetDrag = suit.dragMax;
-
-        // Floating Still
-        currentForce = rigidbody.mass * -Physics.gravity;
-        targetForce = rigidbody.mass * -Physics.gravity;
+        inputReceiver = new InputReceiver();
+        GameData.LoadSetting();
     }
 
-    void FixedUpdate()
+    private void Update()
     {
-        // Drag
-        currentDrag = Mathf.Lerp(currentDrag, targetDrag, Time.fixedDeltaTime * Mathf.Max((200f - suit.weight) / 100f, 1f));
-        // Floating
+        inputReceiver.Update();
+    }
 
-
-        // Calulate Force
-        currentForce = Vector3.Lerp(currentForce, Quaternion.Inverse(transform.rotation) * targetForce, Time.fixedDeltaTime * shoe.control);
-        // Add Force
-        rigidbody.AddRelativeForce(currentForce, ForceMode.Force);
-
-        Vector3 worldForce = transform.rotation * currentForce;
-        Debug.DrawLine(transform.position, transform.position + worldForce);
+    private void FixedUpdate()
+    {
+        transform.Rotate(inputReceiver.rotation, Space.Self);
+        Vector3 dir = inputReceiver.movement.normalized * 60f * Time.fixedDeltaTime;
+        transform.Translate(dir);
+        inputReceiver.Processed();
     }
 }
